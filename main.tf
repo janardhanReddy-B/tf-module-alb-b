@@ -7,15 +7,15 @@ resource "aws_security_group" "main" {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = var.allow_cidr
+    cidr_blocks = var.sg_subnet_cidr
   }
 
-#  ingress {
-#    from_port   = 443
-#    to_port     = 443
-#    protocol    = "tcp"
-#    cidr_blocks = var.sg_subnet_cidr
-#  }
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = var.sg_subnet_cidr
+  }
 
   egress {
     from_port   = 0
@@ -28,85 +28,35 @@ resource "aws_security_group" "main" {
     Name = "${var.name}-${var.env}-sg"
   }
 }
-#
-#resource "aws_lb" "main" {
-#  name               = "${var.name}-${var.env}-lb"
-#  internal           = var.internal
-#  load_balancer_type = var.load_balancer_type
-#  security_groups    = [aws_security_group.main.id]
-#  subnets            = var.subnets
-#  tags               = merge({ Name = "${var.name}-${var.env}-lb" }, var.tags)
-#}
-#
-#resource "aws_lb_listener" "public" {
-#  count             = var.name == "public" ? 1 : 0
-#  load_balancer_arn = aws_lb.main.arn
-#  port              = "80"
-#  protocol          = "HTTP"
-#
-#  default_action {
-#    type = "redirect"
-#
-#    redirect {
-#      port        = "443"
-#      protocol    = "HTTPS"
-#      status_code = "HTTP_301"
-#    }
-#  }
-#}
-#
-#resource "aws_lb_listener" "private" {
-#  count             = var.name == "private" ? 1 : 0
-#  load_balancer_arn = aws_lb.main.arn
-#  port              = "80"
-#  protocol          = "HTTP"
-#
-#  default_action {
-#    type = "fixed-response"
-#
-#    fixed_response {
-#      content_type = "text/plain"
-#      message_body = "Default Error"
-#      status_code  = "500"
-#    }
-#  }
-#}
-#
-#
-#resource "aws_lb_listener" "main" {
-#  count             = var.name == "public" ? 1 : 0
-#  load_balancer_arn = aws_lb.main.arn
-#  port              = 443
-#  protocol          = "HTTPS"
-#  ssl_policy        = "ELBSecurityPolicy-2016-08"
-#  certificate_arn   = "arn:aws:acm:us-east-1:637261222008:certificate/3a62dc5f-d69c-4a22-a843-a6186fc9dc6b"
-#
-#  default_action {
-#    type = "fixed-response"
-#
-#    fixed_response {
-#      content_type = "text/plain"
-#      message_body = "Default Error"
-#      status_code  = "500"
-#    }
-#  }
-#}
 
 resource "aws_lb" "main" {
-  name                       = "${var.name}-${var.env}"
-  internal                   = var.internal
-  load_balancer_type         = var.load_balancer_type
-  subnets                    = var.subnets
-  enable_deletion_protection = var.enable_deletion_protection
-  security_groups            = [aws_security_group.main.id]
-
-  tags = merge(
-    var.tags,
-    { Name = "${var.name}-${var.env}" }
-  )
+  name               = "${var.name}-${var.env}-lb"
+  internal           = var.internal
+  load_balancer_type = var.load_balancer_type
+  security_groups    = [aws_security_group.main.id]
+  subnets            = var.subnets
+  tags               = merge({ Name = "${var.name}-${var.env}-lb" }, var.tags)
 }
 
-resource "aws_lb_listener" "main" {
+resource "aws_lb_listener" "public" {
+  count             = var.name == "public" ? 1 : 0
+  load_balancer_arn = aws_lb.main.arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type = "redirect"
+
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+}
+
+resource "aws_lb_listener" "private" {
+  count             = var.name == "private" ? 1 : 0
   load_balancer_arn = aws_lb.main.arn
   port              = "80"
   protocol          = "HTTP"
@@ -115,9 +65,30 @@ resource "aws_lb_listener" "main" {
     type = "fixed-response"
 
     fixed_response {
-      content_type = "text/html"
-      message_body = "<h1>503 - Invalid Request</h1>"
-      status_code  = "503"
+      content_type = "text/plain"
+      message_body = "Default Error"
+      status_code  = "500"
     }
   }
 }
+
+
+resource "aws_lb_listener" "main" {
+  count             = var.name == "public" ? 1 : 0
+  load_balancer_arn = aws_lb.main.arn
+  port              = 443
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = "arn:aws:acm:us-east-1:637261222008:certificate/3a62dc5f-d69c-4a22-a843-a6186fc9dc6b"
+
+  default_action {
+    type = "fixed-response"
+
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "Default Error"
+      status_code  = "500"
+    }
+  }
+}
+
