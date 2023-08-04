@@ -7,7 +7,7 @@ resource "aws_security_group" "main" {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = var.sg_subnet_cidr
+    cidr_blocks = var.allow_cidr
   }
 
 #  ingress {
